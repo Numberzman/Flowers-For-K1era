@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>Flower Story</title>
+<title>Flower Swipe Story</title>
 
 <style>
   body {
@@ -40,7 +40,7 @@
     padding: 40px;
     color: white;
     z-index: 3;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
 
   .hint {
@@ -48,7 +48,7 @@
     bottom: env(safe-area-inset-bottom, 20px);
     right: 20px;
     font-size: 14px;
-    opacity: 0.7;
+    opacity: 0.75;
     z-index: 4;
     color: white;
   }
@@ -64,9 +64,7 @@
 <div class="hint">Swipe →</div>
 
 <script>
-/* -------------------------
-   STORY
---------------------------*/
+/* ---------------- STORY ---------------- */
 const slides = [
   "I spent hours on this",
   "Making a website to give you flowers",
@@ -76,9 +74,7 @@ const slides = [
 
 let stage = 0;
 
-/* -------------------------
-   SWIPE (REAL DRAG FEEL)
---------------------------*/
+/* ---------------- SWIPE ---------------- */
 let startX = 0;
 
 document.addEventListener("touchstart", e => {
@@ -86,7 +82,7 @@ document.addEventListener("touchstart", e => {
 }, {passive:true});
 
 document.addEventListener("touchend", e => {
-  let dx = e.changedTouches[0].clientX - startX;
+  const dx = e.changedTouches[0].clientX - startX;
   if (dx < -40) next();
 });
 
@@ -94,7 +90,6 @@ document.addEventListener("click", next);
 
 function next() {
   const card = document.getElementById("card");
-
   stage++;
 
   if (stage < slides.length) {
@@ -110,12 +105,10 @@ function next() {
     return;
   }
 
-  startFinalScene();
+  startFinal();
 }
 
-/* -------------------------
-   CANVAS ENGINE
---------------------------*/
+/* ---------------- CANVAS SETUP ---------------- */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -126,77 +119,79 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* images */
-const flowerImgs = [];
-const leafImg = new Image();
-leafImg.src = "https://i.pinimg.com/736x/71/8b/ec/718becda788a978ea464c6e82f89a9fa.jpg";
+/* IMPORTANT iOS FIX */
+ctx.imageSmoothingEnabled = true;
 
+/* ---------------- ASSETS ---------------- */
 const flowerSources = [
-  "https://png.pngtree.com/png-vector/20240720/ourlarge/pngtree-pink-flower-isolated-on-transparent-background-png-image_13159944.png",
-  "https://img.magnific.com/free-psd/vibrant-red-zinnia-bloom_632498-25864.jpg?semt=ais_hybrid&w=740&q=80",
-  "https://img.magnific.com/free-psd/elegant-pink-rose-vine-corner-design-perfect-wedding-invitations-romantic-cards_191095-78627.jpg",
-  "https://img.magnific.com/premium-psd/begonia-flower-isolated-transparent-background_191095-29482.jpg"
+  "https://upload.wikimedia.org/wikipedia/commons/f/fc/Blue_Flower_Transparent_Background.png",
+  "https://www.onlygfx.com/wp-content/uploads/2016/05/red-rose-1.png",
+  "https://static.vecteezy.com/system/resources/thumbnails/041/669/284/small/ai-generated-bright-white-flower-with-elegant-petals-on-transparent-background-stock-png.png",
+  "https://static.vecteezy.com/system/resources/thumbnails/041/669/348/small/ai-generated-vibrant-yellow-cosmos-flower-with-delicate-petals-on-transparent-background-stock-png.png"
 ];
 
-flowerSources.forEach(src => {
-  const img = new Image();
-  img.src = src;
-  flowerImgs.push(img);
-});
+const leafSources = [
+  "https://png.pngtree.com/png-clipart/20240420/original/pngtree-green-leaf-for-element-png-image_14904901.png",
+  "https://gallery.yopriceville.com/var/albums/Free-Clipart-Pictures/Decorative-Elements-PNG/Leaf_PNG_Clipart.png"
+];
 
-/* particles */
 const flowers = [];
 const leaves = [];
 
-/* -------------------------
-   FLOWER PARTICLE
---------------------------*/
-function spawnFlower() {
+function loadImages(arr) {
+  return arr.map(src => {
+    const img = new Image();
+    img.src = src;
+    return img;
+  });
+}
+
+const flowerImgs = loadImages(flowerSources);
+const leafImgs = loadImages(leafSources);
+
+/* ---------------- PARTICLES ---------------- */
+function spawnFlower(x = Math.random() * canvas.width, y = Math.random() * canvas.height) {
   flowers.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    vx: (Math.random() - 0.5) * 1.5,
-    vy: (Math.random() - 1.5),
-    size: 40 + Math.random() * 40,
+    x,
+    y,
+    vx: (Math.random() - 0.5) * 2,
+    vy: (Math.random() - 2),
+    size: 40 + Math.random() * 50,
     img: flowerImgs[Math.floor(Math.random() * flowerImgs.length)],
     rot: Math.random() * Math.PI
   });
 }
 
-/* -------------------------
-   LEAF PARTICLE
---------------------------*/
 function spawnLeaf() {
   leaves.push({
     x: -50,
     y: Math.random() * canvas.height,
     vx: 2 + Math.random() * 2,
     vy: (Math.random() - 0.5),
-    size: 25 + Math.random() * 15,
+    size: 25 + Math.random() * 20,
+    img: leafImgs[Math.floor(Math.random() * leafImgs.length)],
     rot: Math.random() * Math.PI
   });
 }
 
-/* -------------------------
-   FINAL SCENE
---------------------------*/
-function startFinalScene() {
+/* ---------------- FINAL SCENE ---------------- */
+function startFinal() {
   document.getElementById("card").style.display = "none";
   document.querySelector(".hint").style.display = "none";
 
-  // burst
-  for (let i = 0; i < 40; i++) spawnFlower();
+  for (let i = 0; i < 50; i++) spawnFlower();
 
   setInterval(() => {
-    for (let i = 0; i < 2; i++) spawnFlower();
+    spawnFlower(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height
+    );
   }, 200);
 }
 
-/* -------------------------
-   ANIMATION LOOP
---------------------------*/
+/* ---------------- LOOP ---------------- */
 function animate() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   /* leaves */
   for (let i = 0; i < leaves.length; i++) {
@@ -208,10 +203,10 @@ function animate() {
     ctx.save();
     ctx.translate(l.x, l.y);
     ctx.rotate(l.rot);
-    ctx.drawImage(leafImg, -l.size/2, -l.size/2, l.size, l.size);
+    ctx.drawImage(l.img, -l.size/2, -l.size/2, l.size, l.size);
     ctx.restore();
 
-    if (l.x > canvas.width + 100) leaves.splice(i,1);
+    if (l.x > canvas.width + 100) leaves.splice(i, 1);
   }
 
   /* flowers */
@@ -219,7 +214,7 @@ function animate() {
     const f = flowers[i];
     f.x += f.vx;
     f.y += f.vy;
-    f.vy += 0.01; // gravity
+    f.vy += 0.01;
     f.rot += 0.02;
 
     ctx.save();
@@ -233,17 +228,10 @@ function animate() {
 }
 animate();
 
-/* ambient leaves always */
+/* ambient leaves */
 setInterval(() => {
   if (stage >= slides.length - 1) return;
-  leaves.push({
-    x: -50,
-    y: Math.random() * canvas.height,
-    vx: 2 + Math.random() * 2,
-    vy: (Math.random() - 0.5),
-    size: 20 + Math.random() * 20,
-    rot: 0
-  });
+  spawnLeaf();
 }, 300);
 </script>
 
