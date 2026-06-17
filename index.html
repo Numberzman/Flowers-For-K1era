@@ -6,10 +6,8 @@
 
 <title>Flower Story</title>
 
-<!-- iOS app-like behavior -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Flower Story">
 
 <style>
 html, body {
@@ -19,19 +17,19 @@ html, body {
   height: 100%;
   overflow: hidden;
 
-  font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", cursive;
+  font-family: "Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive;
 
-  /* NEW BACKGROUND */
   background: url("https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/0bd85dc1-8dbc-4ae9-b532-e664e90c9e8c/dg7pab1-57024b30-d524-4791-8b48-4d1e7cd95053.png")
-    no-repeat center center fixed;
+  no-repeat center center fixed;
+
   background-size: cover;
 }
 
-/* soft bright overlay (dreamy daylight) */
+/* soft bright overlay */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255,255,255,0.08);
   z-index: 2;
 }
 
@@ -41,6 +39,7 @@ canvas {
   z-index: 1;
 }
 
+/* TEXT (FIXED VISIBILITY) */
 #card {
   position: fixed;
   inset: 0;
@@ -50,12 +49,13 @@ canvas {
   text-align: center;
 
   font-size: 28px;
-  padding: 40px;
   color: white;
+  padding: 40px;
 
-  z-index: 3;
+  z-index: 10;
 
   transition: opacity 0.25s ease, transform 0.25s ease;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
 .hint {
@@ -63,10 +63,15 @@ canvas {
   bottom: env(safe-area-inset-bottom, 20px);
   right: 20px;
   font-size: 14px;
-  opacity: 0.75;
-  z-index: 4;
+  opacity: 0.8;
   color: white;
+  z-index: 11;
   pointer-events: none;
+}
+
+/* SAFE AREA FIX */
+html, body {
+  height: 100%;
 }
 </style>
 </head>
@@ -137,59 +142,55 @@ resize();
 
 ctx.imageSmoothingEnabled = true;
 
-/* ---------------- ASSETS ---------------- */
-const flowerSources = [
-  "https://upload.wikimedia.org/wikipedia/commons/f/fc/Blue_Flower_Transparent_Background.png",
-  "https://www.onlygfx.com/wp-content/uploads/2016/05/red-rose-1.png",
-  "https://static.vecteezy.com/system/resources/thumbnails/041/669/284/small/ai-generated-bright-white-flower-with-elegant-petals-on-transparent-background-stock-png.png",
-  "https://static.vecteezy.com/system/resources/thumbnails/041/669/348/small/ai-generated-vibrant-yellow-cosmos-flower-with-delicate-petals-on-transparent-background-stock-png.png"
-];
-
-const leafSources = [
-  "https://png.pngtree.com/png-clipart/20240420/original/pngtree-green-leaf-for-element-png-image_14904901.png",
-  "https://gallery.yopriceville.com/var/albums/Free-Clipart-Pictures/Decorative-Elements-PNG/Leaf_PNG_Clipart.png"
-];
-
-function load(arr) {
-  return arr.map(src => {
+/* ---------------- IMAGES ---------------- */
+function load(srcs) {
+  return srcs.map(s => {
     const img = new Image();
-    img.src = src;
+    img.src = s;
     return img;
   });
 }
 
+const flowerImgs = load([
+  "https://upload.wikimedia.org/wikipedia/commons/f/fc/Blue_Flower_Transparent_Background.png",
+  "https://www.onlygfx.com/wp-content/uploads/2016/05/red-rose-1.png",
+  "https://static.vecteezy.com/system/resources/thumbnails/041/669/284/small/ai-generated-bright-white-flower-with-elegant-petals-on-transparent-background-stock-png.png",
+  "https://static.vecteezy.com/system/resources/thumbnails/041/669/348/small/ai-generated-vibrant-yellow-cosmos-flower-with-delicate-petals-on-transparent-background-stock-png.png"
+]);
+
+const leafImgs = load([
+  "https://png.pngtree.com/png-clipart/20240420/original/pngtree-green-leaf-for-element-png-image_14904901.png",
+  "https://gallery.yopriceville.com/var/albums/Free-Clipart-Pictures/Decorative-Elements-PNG/Leaf_PNG_Clipart.png"
+]);
+
+/* ---------------- PARTICLES ---------------- */
 const flowers = [];
 const leaves = [];
 
-const flowerImgs = load(flowerSources);
-const leafImgs = load(leafSources);
-
-/* ---------------- PARTICLES ---------------- */
-function spawnFlower(x = Math.random() * canvas.width, y = Math.random() * canvas.height) {
+function spawnFlower(x = Math.random()*canvas.width, y = Math.random()*canvas.height) {
   flowers.push({
-    x,
-    y,
-    vx: (Math.random() - 0.5) * 2,
-    vy: (Math.random() - 2),
-    size: 40 + Math.random() * 50,
-    img: flowerImgs[Math.floor(Math.random() * flowerImgs.length)],
-    rot: Math.random() * Math.PI
+    x, y,
+    vx: (Math.random()-0.5)*2,
+    vy: (Math.random()-2),
+    size: 40 + Math.random()*50,
+    img: flowerImgs[Math.floor(Math.random()*flowerImgs.length)],
+    rot: Math.random()*Math.PI
   });
 }
 
 function spawnLeaf() {
   leaves.push({
     x: -50,
-    y: Math.random() * canvas.height,
-    vx: 2 + Math.random() * 2,
-    vy: (Math.random() - 0.5),
-    size: 20 + Math.random() * 20,
-    img: leafImgs[Math.floor(Math.random() * leafImgs.length)],
-    rot: Math.random() * Math.PI
+    y: Math.random()*canvas.height,
+    vx: 2 + Math.random()*2,
+    vy: (Math.random()-0.5),
+    size: 20 + Math.random()*20,
+    img: leafImgs[Math.floor(Math.random()*leafImgs.length)],
+    rot: Math.random()*Math.PI
   });
 }
 
-/* ---------------- FINAL ---------------- */
+/* ---------------- FINAL SCENE ---------------- */
 function startFinal() {
   document.getElementById("card").style.display = "none";
   document.querySelector(".hint").style.display = "none";
@@ -197,35 +198,30 @@ function startFinal() {
   for (let i = 0; i < 50; i++) spawnFlower();
 
   setInterval(() => {
-    spawnFlower(
-      Math.random() * canvas.width,
-      Math.random() * canvas.height
-    );
-  }, 180);
+    spawnFlower(Math.random()*canvas.width, Math.random()*canvas.height);
+  }, 200);
 }
 
 /* ---------------- LOOP ---------------- */
 function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // leaves
-  for (let i = 0; i < leaves.length; i++) {
+  for (let i=0;i<leaves.length;i++) {
     const l = leaves[i];
     l.x += l.vx;
     l.y += l.vy;
     l.rot += 0.01;
 
     ctx.save();
-    ctx.translate(l.x, l.y);
+    ctx.translate(l.x,l.y);
     ctx.rotate(l.rot);
-    ctx.drawImage(l.img, -l.size/2, -l.size/2, l.size, l.size);
+    ctx.drawImage(l.img,-l.size/2,-l.size/2,l.size,l.size);
     ctx.restore();
 
-    if (l.x > canvas.width + 100) leaves.splice(i, 1);
+    if (l.x > canvas.width+100) leaves.splice(i,1);
   }
 
-  // flowers
-  for (let i = 0; i < flowers.length; i++) {
+  for (let i=0;i<flowers.length;i++) {
     const f = flowers[i];
     f.x += f.vx;
     f.y += f.vy;
@@ -233,9 +229,9 @@ function animate() {
     f.rot += 0.02;
 
     ctx.save();
-    ctx.translate(f.x, f.y);
+    ctx.translate(f.x,f.y);
     ctx.rotate(f.rot);
-    ctx.drawImage(f.img, -f.size/2, -f.size/2, f.size, f.size);
+    ctx.drawImage(f.img,-f.size/2,-f.size/2,f.size,f.size);
     ctx.restore();
   }
 
@@ -245,7 +241,7 @@ animate();
 
 /* ambient leaves */
 setInterval(() => {
-  if (stage >= slides.length - 1) return;
+  if (stage >= slides.length-1) return;
   spawnLeaf();
 }, 300);
 
