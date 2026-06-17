@@ -3,144 +3,202 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Flowers for You 🌸</title>
+<title>Flower Story</title>
 
 <style>
-body {
+  body {
     margin: 0;
     overflow: hidden;
-    height: 100vh;
-    background: linear-gradient(to top, #f7dce5, #fffafc);
-    font-family: Georgia, serif;
-}
+    font-family: Arial, sans-serif;
+    color: white;
+    background: url("https://thumbs.dreamstime.com/b/watercolor-background-abstract-depiction-sky-clouds-green-grass-watercolor-background-abstract-358292427.jpg") no-repeat center center fixed;
+    background-size: cover;
+  }
 
-#garden {
-    position: absolute;
-    width: 120%;
-    height: 120%;
-    left: -10%;
-    top: -10%;
-}
-
-.flower {
-    position: absolute;
-    transition: transform 0.15s ease-out;
-    opacity: 0;
-    animation: bloom 1.2s forwards ease-out;
-}
-
-.flower img {
-    width: 40px;
-    height: auto;
-    pointer-events: none;
-}
-
-@keyframes bloom {
-    from { transform: scale(0); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.message {
+  /* subtle dark overlay for readability */
+  .overlay {
     position: absolute;
     width: 100%;
-    text-align: center;
-    top: 45%;
-    transform: translateY(-50%);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    color: #8a4b6a;
-    opacity: 0;
-    animation: fadeIn 2.5s forwards;
-    animation-delay: 2.5s;
-}
+    height: 100%;
+    background: rgba(0,0,0,0.35);
+    top: 0;
+    left: 0;
+  }
 
-@keyframes fadeIn {
-    to { opacity: 1; }
-}
+  .card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 26px;
+    padding: 40px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 2;
+  }
+
+  .fade {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  /* swipe hint */
+  .hint {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 14px;
+    opacity: 0.6;
+    z-index: 5;
+  }
+
+  /* floating leaves */
+  .leaf {
+    position: absolute;
+    width: 30px;
+    opacity: 0.7;
+    animation: drift linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes drift {
+    0% {
+      transform: translateX(-50px) translateY(-10vh) rotate(0deg);
+    }
+    100% {
+      transform: translateX(110vw) translateY(110vh) rotate(360deg);
+    }
+  }
+
+  /* final flowers */
+  .flower {
+    position: absolute;
+    width: 80px;
+    animation: float 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-25px) rotate(10deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+  }
+
+  #finalMessage {
+    position: absolute;
+    bottom: 15%;
+    width: 100%;
+    text-align: center;
+    font-size: 22px;
+    z-index: 4;
+    padding: 0 20px;
+  }
 </style>
 </head>
 
 <body>
 
-<div id="garden"></div>
+<div class="overlay"></div>
 
-<div class="message">
-    You're So Pretty,<br>
-    Here's A Fake Field Of Flowers Just For You 🙃
+<div id="card" class="card">
+  I spent hours on this
 </div>
 
-<script>
-const garden = document.getElementById("garden");
+<div class="hint">Swipe →</div>
 
-const flowers = [
-    "https://i.imgur.com/8QfQG3D.png",
-    "https://i.imgur.com/5bXQZ2v.png",
-    "https://i.imgur.com/3QZbY7m.png",
-    "https://i.imgur.com/7cP3k9a.png"
+<script>
+const slides = [
+  "I spent hours on this",
+  "Making a website to give you flowers",
+  "I Almost Thought It Wasn't Worth It",
+  "Until I remebered your smile"
 ];
 
-let flowerElements = [];
+const flowerImages = [
+  "https://png.pngtree.com/png-vector/20240720/ourlarge/pngtree-pink-flower-isolated-on-transparent-background-png-image_13159944.png",
+  "https://img.magnific.com/free-psd/vibrant-red-zinnia-bloom_632498-25864.jpg?semt=ais_hybrid&w=740&q=80",
+  "https://img.magnific.com/free-psd/elegant-pink-rose-vine-corner-design-perfect-wedding-invitations-romantic-cards_191095-78627.jpg",
+  "https://img.magnific.com/premium-psd/begonia-flower-isolated-transparent-background_191095-29482.jpg"
+];
 
-let count = 0;
+const leafImg = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRU9hXMWNNRu8DxHeszwvn7-Jxwkb9OF5i5A&s";
 
-function spawnFlower() {
-    const wrapper = document.createElement("div");
-    wrapper.className = "flower";
+let stage = 0;
 
-    const img = document.createElement("img");
+/* swipe logic */
+let startX = 0;
 
-    const randomFlower = flowers[Math.floor(Math.random() * flowers.length)];
-    img.src = randomFlower;
-
-    const size = 25 + Math.random() * 40;
-    img.style.width = size + "px";
-
-    wrapper.appendChild(img);
-
-    const x = Math.random() * window.innerWidth;
-    const y = Math.random() * window.innerHeight;
-
-    wrapper.style.left = x + "px";
-    wrapper.style.top = y + "px";
-
-    garden.appendChild(wrapper);
-
-    flowerElements.push({
-        el: wrapper,
-        x,
-        y
-    });
-
-    count++;
-}
-
-// create field
-for (let i = 0; i < 80; i++) {
-    spawnFlower();
-}
-
-let tiltX = 0;
-let tiltY = 0;
-
-// phone tilt controls
-window.addEventListener("deviceorientation", (e) => {
-    tiltX = e.gamma / 25; // left/right
-    tiltY = e.beta / 25;  // up/down
+document.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
 });
 
-// animate movement
-function animate() {
-    flowerElements.forEach(f => {
-        const offsetX = tiltX * 30;
-        const offsetY = tiltY * 30;
+document.addEventListener("touchend", e => {
+  let endX = e.changedTouches[0].clientX;
+  if (startX - endX > 50) next();
+});
 
-        f.el.style.transform =
-            `translate(${offsetX}px, ${offsetY}px) scale(1)`;
-    });
+document.addEventListener("click", next);
 
-    requestAnimationFrame(animate);
+function next() {
+  const card = document.getElementById("card");
+  stage++;
+
+  if (stage < slides.length) {
+    card.classList.add("fade");
+
+    setTimeout(() => {
+      card.innerHTML = slides[stage];
+      card.classList.remove("fade");
+    }, 300);
+
+    return;
+  }
+
+  triggerFinal();
 }
 
-animate();
+/* final scene */
+function triggerFinal() {
+  document.getElementById("card").style.display = "none";
+  document.querySelector(".hint").style.display = "none";
+
+  const msg = document.createElement("div");
+  msg.id = "finalMessage";
+  msg.innerHTML = "You're So Pretty🙃 Here Are Some Flowers Just For You!";
+  document.body.appendChild(msg);
+
+  // flower burst
+  for (let i = 0; i < 25; i++) {
+    const img = document.createElement("img");
+    img.src = flowerImages[Math.floor(Math.random() * flowerImages.length)];
+    img.className = "flower";
+    img.style.left = Math.random() * 100 + "vw";
+    img.style.top = Math.random() * 100 + "vh";
+    img.style.width = (60 + Math.random() * 40) + "px";
+    document.body.appendChild(img);
+  }
+}
+
+/* floating leaves forever */
+function spawnLeaf() {
+  const leaf = document.createElement("img");
+  leaf.src = leafImg;
+  leaf.className = "leaf";
+  leaf.style.left = "-50px";
+  leaf.style.top = Math.random() * 100 + "vh";
+  leaf.style.animationDuration = (6 + Math.random() * 6) + "s";
+  leaf.style.opacity = 0.4 + Math.random() * 0.5;
+
+  document.body.appendChild(leaf);
+
+  setTimeout(() => leaf.remove(), 12000);
+}
+
+setInterval(spawnLeaf, 500);
 </script>
 
 </body>
