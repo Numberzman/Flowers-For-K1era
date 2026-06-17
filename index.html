@@ -33,7 +33,10 @@ html, body {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  transition: background 1.2s ease;
+
+  /* darkens background without touching flowers/text */
+  background: rgba(0, 0, 0, 0.25);
+}
 }
 
 canvas {
@@ -191,27 +194,19 @@ const flowerImgs = load([
 const flowers = [];
 
 /* budding flowers */
-function growFlower(x, y) {
+function growFlower(x, y = canvas.height - 10) {
   flowers.push({
     x,
-    y,
+    baseY: y,
+    y: y,
     size: 0,
     maxSize: 35 + Math.random() * 40,
     img: flowerImgs[Math.floor(Math.random() * flowerImgs.length)],
-    sway: Math.random() * 0.6
+    sway: Math.random() * 0.6,
+
+    // NEW: vertical drift target (this is key)
+    driftY: y - (Math.random() * canvas.height * 0.7)
   });
-}
-
-/* tap = growth */
-document.addEventListener("click", () => {
-  for (let i = 0; i < 3; i++) {
-    growFlower(Math.random() * canvas.width, canvas.height - 10);
-  }
-});
-
-/* initial flowers */
-for (let i = 0; i < 6; i++) {
-  growFlower(Math.random() * canvas.width, canvas.height - 10);
 }
 
 /* ---------------- ANIMATE ---------------- */
