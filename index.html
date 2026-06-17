@@ -2,203 +2,249 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Flower Story</title>
 
 <style>
   body {
     margin: 0;
     overflow: hidden;
-    font-family: Arial, sans-serif;
-    color: white;
-    background: url("https://thumbs.dreamstime.com/b/watercolor-background-abstract-depiction-sky-clouds-green-grass-watercolor-background-abstract-358292427.jpg") no-repeat center center fixed;
+    font-family: "Comic Sans MS", cursive;
+    background: url("https://img.magnific.com/free-vector/watercolor-natutral-landscape-with-trees_23-2148235621.jpg?semt=ais_hybrid&w=740&q=80")
+      no-repeat center center fixed;
     background-size: cover;
+    touch-action: none;
   }
 
-  /* subtle dark overlay for readability */
+  canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
   .overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.35);
-    top: 0;
-    left: 0;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 2;
   }
 
-  .card {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+  #card {
+    position: fixed;
+    inset: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    font-size: 26px;
+    font-size: 28px;
     padding: 40px;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    z-index: 2;
+    color: white;
+    z-index: 3;
+    transition: transform 0.3s ease, opacity 0.3s ease;
   }
 
-  .fade {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-
-  /* swipe hint */
   .hint {
-    position: absolute;
-    bottom: 20px;
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 20px);
     right: 20px;
     font-size: 14px;
-    opacity: 0.6;
-    z-index: 5;
-  }
-
-  /* floating leaves */
-  .leaf {
-    position: absolute;
-    width: 30px;
     opacity: 0.7;
-    animation: drift linear infinite;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  @keyframes drift {
-    0% {
-      transform: translateX(-50px) translateY(-10vh) rotate(0deg);
-    }
-    100% {
-      transform: translateX(110vw) translateY(110vh) rotate(360deg);
-    }
-  }
-
-  /* final flowers */
-  .flower {
-    position: absolute;
-    width: 80px;
-    animation: float 4s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 3;
-  }
-
-  @keyframes float {
-    0% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-25px) rotate(10deg); }
-    100% { transform: translateY(0px) rotate(0deg); }
-  }
-
-  #finalMessage {
-    position: absolute;
-    bottom: 15%;
-    width: 100%;
-    text-align: center;
-    font-size: 22px;
     z-index: 4;
-    padding: 0 20px;
+    color: white;
   }
 </style>
 </head>
 
 <body>
 
+<canvas id="c"></canvas>
 <div class="overlay"></div>
 
-<div id="card" class="card">
-  I spent hours on this
-</div>
-
+<div id="card">I spent hours on this</div>
 <div class="hint">Swipe →</div>
 
 <script>
+/* -------------------------
+   STORY
+--------------------------*/
 const slides = [
   "I spent hours on this",
   "Making a website to give you flowers",
   "I Almost Thought It Wasn't Worth It",
-  "Until I remebered your smile"
+  "Until I remembered your smile"
 ];
-
-const flowerImages = [
-  "https://png.pngtree.com/png-vector/20240720/ourlarge/pngtree-pink-flower-isolated-on-transparent-background-png-image_13159944.png",
-  "https://img.magnific.com/free-psd/vibrant-red-zinnia-bloom_632498-25864.jpg?semt=ais_hybrid&w=740&q=80",
-  "https://img.magnific.com/free-psd/elegant-pink-rose-vine-corner-design-perfect-wedding-invitations-romantic-cards_191095-78627.jpg",
-  "https://img.magnific.com/premium-psd/begonia-flower-isolated-transparent-background_191095-29482.jpg"
-];
-
-const leafImg = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRU9hXMWNNRu8DxHeszwvn7-Jxwkb9OF5i5A&s";
 
 let stage = 0;
 
-/* swipe logic */
+/* -------------------------
+   SWIPE (REAL DRAG FEEL)
+--------------------------*/
 let startX = 0;
 
 document.addEventListener("touchstart", e => {
   startX = e.touches[0].clientX;
-});
+}, {passive:true});
 
 document.addEventListener("touchend", e => {
-  let endX = e.changedTouches[0].clientX;
-  if (startX - endX > 50) next();
+  let dx = e.changedTouches[0].clientX - startX;
+  if (dx < -40) next();
 });
 
 document.addEventListener("click", next);
 
 function next() {
   const card = document.getElementById("card");
+
   stage++;
 
   if (stage < slides.length) {
-    card.classList.add("fade");
+    card.style.opacity = 0;
+    card.style.transform = "translateY(-10px)";
 
     setTimeout(() => {
-      card.innerHTML = slides[stage];
-      card.classList.remove("fade");
-    }, 300);
+      card.innerText = slides[stage];
+      card.style.opacity = 1;
+      card.style.transform = "translateY(0px)";
+    }, 200);
 
     return;
   }
 
-  triggerFinal();
+  startFinalScene();
 }
 
-/* final scene */
-function triggerFinal() {
+/* -------------------------
+   CANVAS ENGINE
+--------------------------*/
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+/* images */
+const flowerImgs = [];
+const leafImg = new Image();
+leafImg.src = "https://i.pinimg.com/736x/71/8b/ec/718becda788a978ea464c6e82f89a9fa.jpg";
+
+const flowerSources = [
+  "https://png.pngtree.com/png-vector/20240720/ourlarge/pngtree-pink-flower-isolated-on-transparent-background-png-image_13159944.png",
+  "https://img.magnific.com/free-psd/vibrant-red-zinnia-bloom_632498-25864.jpg?semt=ais_hybrid&w=740&q=80",
+  "https://img.magnific.com/free-psd/elegant-pink-rose-vine-corner-design-perfect-wedding-invitations-romantic-cards_191095-78627.jpg",
+  "https://img.magnific.com/premium-psd/begonia-flower-isolated-transparent-background_191095-29482.jpg"
+];
+
+flowerSources.forEach(src => {
+  const img = new Image();
+  img.src = src;
+  flowerImgs.push(img);
+});
+
+/* particles */
+const flowers = [];
+const leaves = [];
+
+/* -------------------------
+   FLOWER PARTICLE
+--------------------------*/
+function spawnFlower() {
+  flowers.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 1.5,
+    vy: (Math.random() - 1.5),
+    size: 40 + Math.random() * 40,
+    img: flowerImgs[Math.floor(Math.random() * flowerImgs.length)],
+    rot: Math.random() * Math.PI
+  });
+}
+
+/* -------------------------
+   LEAF PARTICLE
+--------------------------*/
+function spawnLeaf() {
+  leaves.push({
+    x: -50,
+    y: Math.random() * canvas.height,
+    vx: 2 + Math.random() * 2,
+    vy: (Math.random() - 0.5),
+    size: 25 + Math.random() * 15,
+    rot: Math.random() * Math.PI
+  });
+}
+
+/* -------------------------
+   FINAL SCENE
+--------------------------*/
+function startFinalScene() {
   document.getElementById("card").style.display = "none";
   document.querySelector(".hint").style.display = "none";
 
-  const msg = document.createElement("div");
-  msg.id = "finalMessage";
-  msg.innerHTML = "You're So Pretty🙃 Here Are Some Flowers Just For You!";
-  document.body.appendChild(msg);
+  // burst
+  for (let i = 0; i < 40; i++) spawnFlower();
 
-  // flower burst
-  for (let i = 0; i < 25; i++) {
-    const img = document.createElement("img");
-    img.src = flowerImages[Math.floor(Math.random() * flowerImages.length)];
-    img.className = "flower";
-    img.style.left = Math.random() * 100 + "vw";
-    img.style.top = Math.random() * 100 + "vh";
-    img.style.width = (60 + Math.random() * 40) + "px";
-    document.body.appendChild(img);
+  setInterval(() => {
+    for (let i = 0; i < 2; i++) spawnFlower();
+  }, 200);
+}
+
+/* -------------------------
+   ANIMATION LOOP
+--------------------------*/
+function animate() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  /* leaves */
+  for (let i = 0; i < leaves.length; i++) {
+    const l = leaves[i];
+    l.x += l.vx;
+    l.y += l.vy;
+    l.rot += 0.01;
+
+    ctx.save();
+    ctx.translate(l.x, l.y);
+    ctx.rotate(l.rot);
+    ctx.drawImage(leafImg, -l.size/2, -l.size/2, l.size, l.size);
+    ctx.restore();
+
+    if (l.x > canvas.width + 100) leaves.splice(i,1);
   }
+
+  /* flowers */
+  for (let i = 0; i < flowers.length; i++) {
+    const f = flowers[i];
+    f.x += f.vx;
+    f.y += f.vy;
+    f.vy += 0.01; // gravity
+    f.rot += 0.02;
+
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.rotate(f.rot);
+    ctx.drawImage(f.img, -f.size/2, -f.size/2, f.size, f.size);
+    ctx.restore();
+  }
+
+  requestAnimationFrame(animate);
 }
+animate();
 
-/* floating leaves forever */
-function spawnLeaf() {
-  const leaf = document.createElement("img");
-  leaf.src = leafImg;
-  leaf.className = "leaf";
-  leaf.style.left = "-50px";
-  leaf.style.top = Math.random() * 100 + "vh";
-  leaf.style.animationDuration = (6 + Math.random() * 6) + "s";
-  leaf.style.opacity = 0.4 + Math.random() * 0.5;
-
-  document.body.appendChild(leaf);
-
-  setTimeout(() => leaf.remove(), 12000);
-}
-
-setInterval(spawnLeaf, 500);
+/* ambient leaves always */
+setInterval(() => {
+  if (stage >= slides.length - 1) return;
+  leaves.push({
+    x: -50,
+    y: Math.random() * canvas.height,
+    vx: 2 + Math.random() * 2,
+    vy: (Math.random() - 0.5),
+    size: 20 + Math.random() * 20,
+    rot: 0
+  });
+}, 300);
 </script>
 
 </body>
