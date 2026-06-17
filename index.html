@@ -3,55 +3,71 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>Flower Swipe Story</title>
+
+<title>Flower Story</title>
+
+<!-- iOS app-like behavior -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flower Story">
 
 <style>
-  body {
-    margin: 0;
-    overflow: hidden;
-    font-family: "Comic Sans MS", cursive;
-    background: url("https://img.magnific.com/free-vector/watercolor-natutral-landscape-with-trees_23-2148235621.jpg?semt=ais_hybrid&w=740&q=80")
-      no-repeat center center fixed;
-    background-size: cover;
-    touch-action: none;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 
-  canvas {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-  }
+  font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", cursive;
 
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.25);
-    z-index: 2;
-  }
+  /* NEW BACKGROUND */
+  background: url("https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/0bd85dc1-8dbc-4ae9-b532-e664e90c9e8c/dg7pab1-57024b30-d524-4791-8b48-4d1e7cd95053.png")
+    no-repeat center center fixed;
+  background-size: cover;
+}
 
-  #card {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 28px;
-    padding: 40px;
-    color: white;
-    z-index: 3;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
+/* soft bright overlay (dreamy daylight) */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 2;
+}
 
-  .hint {
-    position: fixed;
-    bottom: env(safe-area-inset-bottom, 20px);
-    right: 20px;
-    font-size: 14px;
-    opacity: 0.75;
-    z-index: 4;
-    color: white;
-  }
+canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+#card {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  font-size: 28px;
+  padding: 40px;
+  color: white;
+
+  z-index: 3;
+
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.hint {
+  position: fixed;
+  bottom: env(safe-area-inset-bottom, 20px);
+  right: 20px;
+  font-size: 14px;
+  opacity: 0.75;
+  z-index: 4;
+  color: white;
+  pointer-events: none;
+}
 </style>
 </head>
 
@@ -64,6 +80,7 @@
 <div class="hint">Swipe →</div>
 
 <script>
+
 /* ---------------- STORY ---------------- */
 const slides = [
   "I spent hours on this",
@@ -73,10 +90,9 @@ const slides = [
 ];
 
 let stage = 0;
-
-/* ---------------- SWIPE ---------------- */
 let startX = 0;
 
+/* ---------------- SWIPE ---------------- */
 document.addEventListener("touchstart", e => {
   startX = e.touches[0].clientX;
 }, {passive:true});
@@ -99,7 +115,7 @@ function next() {
     setTimeout(() => {
       card.innerText = slides[stage];
       card.style.opacity = 1;
-      card.style.transform = "translateY(0px)";
+      card.style.transform = "translateY(0)";
     }, 200);
 
     return;
@@ -108,7 +124,7 @@ function next() {
   startFinal();
 }
 
-/* ---------------- CANVAS SETUP ---------------- */
+/* ---------------- CANVAS ---------------- */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -119,7 +135,6 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* IMPORTANT iOS FIX */
 ctx.imageSmoothingEnabled = true;
 
 /* ---------------- ASSETS ---------------- */
@@ -135,10 +150,7 @@ const leafSources = [
   "https://gallery.yopriceville.com/var/albums/Free-Clipart-Pictures/Decorative-Elements-PNG/Leaf_PNG_Clipart.png"
 ];
 
-const flowers = [];
-const leaves = [];
-
-function loadImages(arr) {
+function load(arr) {
   return arr.map(src => {
     const img = new Image();
     img.src = src;
@@ -146,8 +158,11 @@ function loadImages(arr) {
   });
 }
 
-const flowerImgs = loadImages(flowerSources);
-const leafImgs = loadImages(leafSources);
+const flowers = [];
+const leaves = [];
+
+const flowerImgs = load(flowerSources);
+const leafImgs = load(leafSources);
 
 /* ---------------- PARTICLES ---------------- */
 function spawnFlower(x = Math.random() * canvas.width, y = Math.random() * canvas.height) {
@@ -168,13 +183,13 @@ function spawnLeaf() {
     y: Math.random() * canvas.height,
     vx: 2 + Math.random() * 2,
     vy: (Math.random() - 0.5),
-    size: 25 + Math.random() * 20,
+    size: 20 + Math.random() * 20,
     img: leafImgs[Math.floor(Math.random() * leafImgs.length)],
     rot: Math.random() * Math.PI
   });
 }
 
-/* ---------------- FINAL SCENE ---------------- */
+/* ---------------- FINAL ---------------- */
 function startFinal() {
   document.getElementById("card").style.display = "none";
   document.querySelector(".hint").style.display = "none";
@@ -186,14 +201,14 @@ function startFinal() {
       Math.random() * canvas.width,
       Math.random() * canvas.height
     );
-  }, 200);
+  }, 180);
 }
 
 /* ---------------- LOOP ---------------- */
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  /* leaves */
+  // leaves
   for (let i = 0; i < leaves.length; i++) {
     const l = leaves[i];
     l.x += l.vx;
@@ -209,7 +224,7 @@ function animate() {
     if (l.x > canvas.width + 100) leaves.splice(i, 1);
   }
 
-  /* flowers */
+  // flowers
   for (let i = 0; i < flowers.length; i++) {
     const f = flowers[i];
     f.x += f.vx;
@@ -233,6 +248,7 @@ setInterval(() => {
   if (stage >= slides.length - 1) return;
   spawnLeaf();
 }, 300);
+
 </script>
 
 </body>
