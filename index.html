@@ -27,16 +27,13 @@ html, body {
   transition: filter 1.2s ease;
 }
 
-/* dynamic light overlay (THIS is what changes mood) */
+/* dark overlay */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-
-  /* darkens background without touching flowers/text */
   background: rgba(0, 0, 0, 0.75);
-}
 }
 
 canvas {
@@ -60,7 +57,6 @@ canvas {
 
   z-index: 5;
 
-  /* THIS is what makes it readable */
   text-shadow:
     0 2px 10px rgba(0,0,0,0.7),
     0 0 20px rgba(0,0,0,0.4);
@@ -84,30 +80,11 @@ canvas {
 <canvas id="c"></canvas>
 <div class="overlay" id="overlay"></div>
 
-<div id="card">I spent hours on this</div>
+<div id="card">I spent hours</div>
 <div class="hint">Swipe →</div>
 
 <script>
-  const leafImgs = [
-  "https://png.pngtree.com/png-clipart/20240420/original/pngtree-green-leaf-for-element-png-image_14904901.png",
-  "https://gallery.yopriceville.com/var/albums/Free-Clipart-Pictures/Decorative-Elements-PNG/Leaf_PNG_Clipart.png"
-].map(src => {
-  const img = new Image();
-  img.src = src;
-  return img;
-});
-document.addEventListener("click", () => {
 
-  const intensity = stage < slides.length - 1 ? 5 : 18;
-
-  for (let i = 0; i < intensity; i++) {
-    growFlower(
-      Math.random() * canvas.width,
-      Math.random() * canvas.height,
-      true
-    );
-  }
-});
 /* ---------------- STORY ---------------- */
 const slides = [
   "I spent hours",
@@ -119,67 +96,21 @@ const slides = [
 let stage = 0;
 let startX = 0;
 
-/* ---------------- LIGHTING SYSTEM ---------------- */
-const lighting = [
-  {
-    filter: "brightness(1.05) saturate(1.05)",
-    overlay: "rgba(255, 220, 180, 0.08)" // morning glow
-  },
-  {
-    filter: "brightness(1.15) saturate(1.1)",
-    overlay: "rgba(255, 255, 255, 0.05)" // clean daylight
-  },
-  {
-    filter: "brightness(1.05) saturate(1.2)",
-    overlay: "rgba(255, 180, 120, 0.10)" // warm sunset
-  },
-  {
-    filter: "brightness(0.95) saturate(1.15)",
-    overlay: "rgba(120, 140, 200, 0.12)" // dusk / emotional tone
-  }
-];
-
+/* ---------------- LIGHTING (simple safe version) ---------------- */
 function applyLighting(i) {
-  document.body.style.filter = lighting[i].filter;
-  document.getElementById("overlay").style.background = lighting[i].overlay;
+  const overlay = document.getElementById("overlay");
+
+  const levels = [
+    "rgba(0,0,0,0.75)",
+    "rgba(0,0,0,0.55)",
+    "rgba(0,0,0,0.40)",
+    "rgba(0,0,0,0.30)"
+  ];
+
+  overlay.style.background = levels[i] || "rgba(0,0,0,0.3)";
 }
 
-/* start lighting */
 applyLighting(0);
-
-/* ---------------- SWIPE ---------------- */
-document.addEventListener("touchstart", e => {
-  startX = e.touches[0].clientX;
-}, {passive:true});
-
-document.addEventListener("touchend", e => {
-  const dx = e.changedTouches[0].clientX - startX;
-  if (dx < -40) next();
-});
-
-document.addEventListener("click", next);
-
-function next() {
-  const card = document.getElementById("card");
-  stage++;
-
-  if (stage < slides.length) {
-
-    applyLighting(stage); // 🌤️ CHANGE LIGHT WITH STORY
-
-    card.style.opacity = 0;
-
-    setTimeout(() => {
-      card.innerText = slides[stage];
-      card.style.opacity = 1;
-    }, 200);
-
-    return;
-  }
-
-  document.getElementById("card").style.display = "none";
-  document.querySelector(".hint").style.display = "none";
-}
 
 /* ---------------- CANVAS ---------------- */
 const canvas = document.getElementById("c");
@@ -192,9 +123,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-ctx.imageSmoothingEnabled = true;
-
-/* ---------------- FLOWERS ---------------- */
+/* ---------------- IMAGES ---------------- */
 function load(srcs) {
   return srcs.map(s => {
     const img = new Image();
@@ -210,33 +139,117 @@ const flowerImgs = load([
   "https://static.vecteezy.com/system/resources/thumbnails/041/669/348/small/ai-generated-vibrant-yellow-cosmos-flower-with-delicate-petals-on-transparent-background-stock-png.png"
 ]);
 
+const leafImgs = [
+  "https://png.pngtree.com/png-clipart/20240420/original/pngtree-green-leaf-for-element-png-image_14904901.png",
+  "https://gallery.yopriceville.com/var/albums/Free-Clipart-Pictures/Decorative-Elements-PNG/Leaf_PNG_Clipart.png"
+].map(src => {
+  const img = new Image();
+  img.src = src;
+  return img;
+});
+
+/* ---------------- FLOWERS ---------------- */
 const flowers = [];
 
-/* budding flowers */
-function growFlower(x, y = null, forceExplosion = false) {
-
-  const isExplosion = forceExplosion || Math.random() < 0.7;
+function growFlower(x, y, forceExplosion = false) {
+  const explosion = forceExplosion || Math.random() < 0.7;
 
   flowers.push({
-    x: x,
-    y: y ?? (isExplosion ? Math.random() * canvas.height : canvas.height - 10),
-
+    x,
+    y: explosion ? Math.random() * canvas.height : canvas.height - 10,
     size: 0,
     maxSize: 25 + Math.random() * 45,
-
     img: flowerImgs[Math.floor(Math.random() * flowerImgs.length)],
-
     sway: Math.random() * 0.8,
-
-    driftY: isExplosion
-      ? Math.random() * canvas.height
-      : canvas.height - 10
+    driftY: explosion ? Math.random() * canvas.height : canvas.height - 10
   });
 }
-/* ---------------- ANIMATE ---------------- */
+
+/* ---------------- LEAVES ---------------- */
+const leaves = [];
+
+function spawnLeaf() {
+  leaves.push({
+    x: -50,
+    y: Math.random() * canvas.height,
+    vx: 2 + Math.random() * 2,
+    vy: (Math.random() - 0.5),
+    size: 15 + Math.random() * 20,
+    rot: Math.random() * Math.PI,
+    img: leafImgs[Math.floor(Math.random() * leafImgs.length)]
+  });
+}
+
+/* spawn leaves during story */
+setInterval(() => {
+  if (stage < slides.length - 1) {
+    spawnLeaf();
+  }
+}, 250);
+
+/* ---------------- FLOWER + TEXT CONTROL ---------------- */
+document.addEventListener("click", () => {
+
+  next();
+
+  const intensity = stage < slides.length - 1 ? 4 : 18;
+
+  for (let i = 0; i < intensity; i++) {
+    growFlower(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+      true
+    );
+  }
+});
+
+/* ---------------- STORY FLOW ---------------- */
+function next() {
+  const card = document.getElementById("card");
+  stage++;
+
+  if (stage < slides.length) {
+
+    applyLighting(stage);
+
+    card.style.opacity = 0;
+
+    setTimeout(() => {
+      card.innerText = slides[stage];
+      card.style.opacity = 1;
+    }, 200);
+
+  } else {
+    card.style.display = "none";
+    document.querySelector(".hint").style.display = "none";
+  }
+}
+
+/* ---------------- ANIMATION ---------------- */
 function animate() {
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  /* leaves */
+  for (let i = 0; i < leaves.length; i++) {
+    const l = leaves[i];
+
+    l.x += l.vx;
+    l.y += l.vy;
+    l.rot += 0.01;
+
+    ctx.save();
+    ctx.translate(l.x, l.y);
+    ctx.rotate(l.rot);
+    ctx.drawImage(l.img, -l.size/2, -l.size/2, l.size, l.size);
+    ctx.restore();
+
+    if (l.x > canvas.width + 100) {
+      leaves.splice(i, 1);
+    }
+  }
+
+  /* flowers */
   for (let f of flowers) {
 
     if (f.size < f.maxSize) {
